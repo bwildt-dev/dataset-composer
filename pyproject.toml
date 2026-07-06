@@ -1,0 +1,37 @@
+[project]
+name = "dataset-composer"
+version = "0.1.0"
+description = "DICOM → NIfTI dataset composer with configurable structure-based filtering."
+requires-python = ">=3.10"
+authors = [
+    { name = "Boris de Wildt" },
+]
+license = { file = "LICENSE" }
+dependencies = [
+    "nibabel>=4.0",
+    "numpy>=1.24",
+    "pydicom>=2.4",
+    "pyyaml>=6.0",
+    "tqdm>=4.65",
+]
+
+[project.urls]
+Homepage = "https://github.com/bwildt-dev/dataset-composer"
+Repository = "https://github.com/bwildt-dev/dataset-composer"
+
+[project.scripts]
+dataset-composer = "dataset_composer.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dataset_composer*"]

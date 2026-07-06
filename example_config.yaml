@@ -1,0 +1,60 @@
+# dataset-composer example configuration
+
+paths:
+  source_dir:   /data/my_cohort/dicom             # full pipeline: DICOM source tree
+  output_root:  /data/my_cohort/composer_out       # final <phase>/<patient_id>/<t0|t1>/ layout
+  scratch_dir:  /scratch/$USER/my_cohort_compose   # intermediate NIfTIs
+  # nifti_dir:  /data/my_cohort/nifti              # classify-only: skip discover+convert
+  # dcm2niix:   /path/to/dcm2niix                  # optional; defaults to PATH
+
+# Patient ID extraction. Patterns are tried in order; the first capture
+# group of the first match is normalised with `format`. Required: naming
+# conventions are cohort-specific, so there's no built-in default.
+id:
+  patterns:
+    - "SUBJ[_-](\\d+)"
+  format: "SUBJ-{:03d}"
+
+# Timepoint extraction and output layout. `enabled: false` omits the
+# timepoint subdirectory and files land under <output>/<phase>/<patient_id>/.
+timepoint:
+  enabled: true
+  labels:
+    t0: [PRERAND]
+    t1: [EVAL]
+  fallback: unknown
+
+classifier:
+  backend: boa
+  device:  cuda
+  # Body-region acceptance rules, checked in order; first match wins. Each
+  # structure name must match a TotalSegmentator output mask filename
+  # (without .nii.gz); the value is the minimum non-zero voxel count for
+  # the region to count as present.
+  regions:
+    - label: abdomen
+      structures:
+        liver: 5000
+  # Only copy scans with these phases into the final output. BOA classifies
+  # into: non_contrast, arterial, venous, pulmonary_arterial, urographic.
+  keep_phases: [arterial, venous]
+
+# Folder-name regex filters applied before any DICOM is opened. Omit to use
+# the built-in reformat/topogram/scout patterns.
+# scanner:
+#   reformat_patterns: ["MPR", "coronal", "sagittal"]
+#   topogram_patterns: ["topogram", "scout", "locator"]
+
+wandb:
+  enabled: false
+  project: my-dataset-composer
+  run_name: null
+  tags: []
+
+# Copy every classified NIfTI regardless of phase (useful for audit runs).
+keep_all: false
+
+# Recursively unzip *.zip under source_dir before discovery.
+unzip_archives: true
+delete_zips_after: false
+unzip_workers: null   # null -> min(cpu_count(), 8)
